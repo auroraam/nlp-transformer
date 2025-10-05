@@ -7,7 +7,9 @@ def softmax(x, axis=-1):
 
 
 def causal_mask(seq_len):
-    return np.tril(np.ones((seq_len, seq_len), dtype=bool))
+    mask = np.tril(np.ones((seq_len, seq_len)))
+    mask = np.where(mask == 1, 0.0, -np.inf)
+    return mask
 
 
 class TokenEmbedding:
@@ -176,7 +178,7 @@ class DecoderOnlyTransformer:
         last_token_logits = logits[:, -1, :]
         next_token_probs = softmax(last_token_logits, axis=-1)
         if return_attn:
-            return logits, next_token_probs, attn_weights_all
+            return logits, next_token_probs, attn_weights_all, mask
         return logits, next_token_probs
 
 
@@ -213,7 +215,9 @@ if __name__ == "__main__":
     print(f"Input:{dummy_input}\n")
 
     # forward pass
-    logits, next_token_probs, attn_weights = model.forward(dummy_input, return_attn=True)
+    logits, next_token_probs, attn_weights, mask = model.forward(dummy_input, return_attn=True)
+
+    print("Mask shape:", mask.shape, "\n")
 
     # hasil akhir
     print("Output logits shape:", logits.shape, "(batch_size, seq_len, vocab_size)")
